@@ -24,10 +24,20 @@ class GatewayConfig(BaseModel):
     timeout_seconds: float = Field(default=60, gt=0, le=3600)
     capture_content: bool = False
     capture_max_chars: int = Field(default=8192, ge=256, le=32768)
+    export_logs: bool = False
+    runtime_workspace: str | None = None
+    runtime_output_bytes: int = Field(default=16384, ge=1024, le=65536)
 
     @model_validator(mode="after")
     def check_transport(self):
-        if self.transport == "stdio":
+        if self.transport == "runtime":
+            if not self.runtime_workspace or not Path(self.runtime_workspace).is_absolute():
+                raise ValueError("runtime requires an absolute runtime_workspace")
+            if self.command or self.args or self.cwd or self.url or self.headers_from_env or self.pass_env:
+                raise ValueError("runtime does not accept upstream transport settings")
+        elif self.runtime_workspace:
+            raise ValueError("runtime_workspace requires runtime transport")
+        elif self.transport == "stdio":
             if not self.command or self.url or self.headers_from_env:
                 raise ValueError("stdio needs command; URL and HTTP headers are not applicable")
         elif self.transport == "streamable_http":
@@ -35,7 +45,7 @@ class GatewayConfig(BaseModel):
                 raise ValueError("streamable_http needs URL; subprocess settings are not applicable")
             validate_url(self.url)
         else:
-            raise ValueError("transport must be stdio or streamable_http")
+            raise ValueError("transport must be stdio, streamable_http or runtime")
         for name in self.pass_env + list(self.headers_from_env.values()):
             if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
                 raise ValueError("invalid environment variable name")

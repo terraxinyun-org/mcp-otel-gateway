@@ -8,10 +8,15 @@
 2. Use a Cloud Access Policy token with `traces:write`. A Grafana service-account
    token for managing dashboards is a different credential. Never commit either.
 3. In Dashboards > New > Import, upload `agent-monitoring.json`, select the existing
-   Grafana Cloud Traces / Tempo data source, and import. The dashboard has tables
-   for tool calls, failures, and imported runtime evidence. It starts empty.
+   Grafana Cloud Traces / Tempo and Logs / Loki data sources, and import. The
+   dashboard has log panels for commands, file operations and all MCP calls,
+   plus trace tables for tool calls, failures and imported runtime evidence.
+   It starts empty until you connect exporters.
 4. Launch the gateway with the OTLP settings and exercise a tool. Open a trace
-   from the results to inspect attributes and captured span events.
+   from the results to inspect attributes and captured span events. Set
+   `export_logs: true` in gateway config to populate the log panels. See
+   [MCP execution mode](../runtime/README.md) for command/file tools and the
+   Codex launcher that restricts execution to them.
 
 Example environment settings (placeholders, not working credentials):
 
@@ -109,5 +114,6 @@ Official references:
 - https://grafana.com/docs/grafana-cloud/observe-and-act/agent-observability/configure/sdk/
 - https://grafana.com/docs/grafana-cloud/learn-and-build/visualizations/panels-visualizations/visualizations/traces/
 
-The dashboard JSON is a starter template. Its schema/queries are checked locally;
-import and rendering in your authenticated Grafana stack require live verification.
+The dashboard JSON is a starter template. Tempo/Loki queries have been verified
+through an authenticated Grafana Cloud API with live gateway data. Each new stack
+still needs its own data-source selection, credentials and ingestion checks.

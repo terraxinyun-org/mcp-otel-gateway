@@ -1,5 +1,31 @@
 # Validation — 2026-09-24
 
+## Version 0.4.0 — MCP execution and logs
+
+- Twenty-one tests passed on Python 3.12; dependency checks and wheel build passed.
+- Added in-process MCP tools for commands, text file reads and writes. No separate
+  monitoring daemon or file-tail collector was deployed.
+- Command tests cover real stdout/stderr, nonzero exit codes, timeout, bounded
+  output, environment credential omission, and workspace path/symlink rejection
+  for file tools. Command cwd restrictions are not an OS sandbox.
+- Real subprocess MCP calls exported both OTLP protobuf logs and traces to an HTTP
+  receiver; start/completion logs share their tool span's trace ID. Email content
+  remained in the tool result but was absent from exported log/trace bytes.
+- A live Codex CLI 0.156.1 run in an Ubuntu container used the restricted launcher
+  and performed exactly five MCP calls: three commands, one write, one read.
+  All ordinary operations succeeded; a deliberate `exit 7` was a tool error.
+  No built-in `command_execution` or `file_change` events occurred in that run.
+- The launcher disables shell/browser/apps/plugins/subagents, removes built-in
+  apply-patch from its startup model catalog, and requires the execution MCP.
+  It preapproves only the three allowlisted tools for its unattended invocation.
+  This profile is version-specific, not global or tamper-proof enforcement.
+- Independently queried Grafana Cloud Loki through the service-account API and
+  retrieved all ten start/completion logs from the real agent run, including
+  stdout/stderr, file operations, exit status and correlation IDs. Tempo ingestion
+  and trace lookup had also been verified through the API.
+- Updated the live dashboard with command and file log panels. No Fly image,
+  global harness configuration, or real application workload was changed.
+
 ## Version 0.3.0 — optional content and saved runtime evidence
 
 - Nineteen tests passed on Python 3.12, retaining the previous compatibility tests.

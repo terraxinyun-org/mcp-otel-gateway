@@ -15,6 +15,11 @@ or AI inference is required. This is a tools-only gateway, not a full MCP proxy 
 host activity monitor. It does not capture local shell calls that bypass it,
 model conversations, filesystem events or another MCP connection's traffic.
 
+Version 0.4 also provides [MCP command/file execution tools and correlated logs](examples/runtime/README.md).
+Use runtime mode when you want commands and file operations to happen through MCP,
+without installing a separate host collector. A tested Codex launch profile makes
+this its execution route; other harnesses require their own tool restrictions.
+
 ## Install
 
 Python 3.11+:
@@ -82,7 +87,7 @@ that every application/version has been tested in a live model session.
 
 ## Choose a telemetry destination
 
-Supported output is **OTLP traces over HTTP/protobuf**. A compatible backend can
+Supported output is **OTLP traces and optional logs over HTTP/protobuf**. A compatible backend can
 ingest this directly; other systems need an OpenTelemetry Collector exporter or
 another supported bridge. This does not promise support for every vendor API.
 
@@ -186,8 +191,8 @@ The SDK's evolving GenAI names are isolated to this package's instrumentation.
   continuation workflows and progress forwarding are not supported. This is not
   a transparent replacement for servers requiring those capabilities.
 - Tools/list is forwarded on request; list-change notifications are not relayed.
-- This release exports traces only, not a separate metrics/logs pipeline. It does
-  not perform threat detection, AI review, enforcement or microVM provisioning.
+- Logs are opt-in with `export_logs: true`. Metrics are not exported. This release
+  does not perform threat detection, AI review, OS containment or microVM provisioning.
 - No cloud service or live MCP client configuration
   is changed by installing this package.
 

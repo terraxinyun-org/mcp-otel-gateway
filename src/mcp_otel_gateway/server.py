@@ -29,7 +29,11 @@ LOG = logging.getLogger("mcp_otel_gateway")
 
 @asynccontextmanager
 async def upstream_client(config: GatewayConfig):
-    if config.transport == "stdio":
+    if config.transport == "runtime":
+        from .execution import make_execution_server
+        async with Client(make_execution_server(config), read_timeout_seconds=config.timeout_seconds) as client:
+            yield client
+    elif config.transport == "stdio":
         params = StdioServerParameters(command=config.command, args=config.args,
                                        cwd=config.cwd, env=child_environment(config))
         async with Client(params, read_timeout_seconds=config.timeout_seconds) as client:
@@ -90,6 +94,7 @@ def make_server(config: GatewayConfig, telemetry: Telemetry, connect=None) -> Se
             PROPAGATOR.inject(forwarded)
             if capture:
                 capture.event(span, "mcp.tool.arguments", params.arguments)
+            telemetry.log("mcp.tool.started", params.name, params.arguments if capture else None)
             try:
                 async with asyncio.timeout(config.timeout_seconds):
                     result = await ctx.lifespan_context.call_tool(
@@ -109,17 +114,24 @@ def make_server(config: GatewayConfig, telemetry: Telemetry, connect=None) -> Se
                         for block in result.content
                     ], "structured_content": result.structured_content}
                     capture.event(span, "mcp.tool.result", payload)
+                telemetry.log("mcp.tool.completed", params.name,
+                              result.structured_content if capture and result.structured_content is not None
+                              else ({"content": [b.text for b in result.content if b.type == "text"]} if capture else None),
+                              error=bool(result.is_error))
                 # Preserve text, binary content, structured output and metadata.
                 return result
             except asyncio.CancelledError:
+                telemetry.log("mcp.tool.cancelled", params.name, error=True)
                 span.set_status(Status(StatusCode.ERROR))
                 span.set_attribute("error.type", "cancelled")
                 raise
             except TimeoutError:
+                telemetry.log("mcp.tool.timeout", params.name, error=True)
                 span.set_status(Status(StatusCode.ERROR))
                 span.set_attribute("error.type", "timeout")
                 return error_result("Upstream tool timed out. Its external side effects may still have occurred; do not retry blindly.")
             except Exception:
+                telemetry.log("mcp.tool.failed", params.name, error=True)
                 span.set_status(Status(StatusCode.ERROR))
                 span.set_attribute("error.type", "upstream_error")
                 LOG.warning("Upstream MCP call failed; exception details omitted to protect payloads.")
@@ -139,6 +151,8 @@ async def serve(config, telemetry, transport="stdio", host="127.0.0.1", port=876
         # Flush before Uvicorn re-raises SIGTERM after lifespan shutdown.
         async def flush():
             await asyncio.to_thread(telemetry.provider.force_flush, timeout_millis=5000)
+            if telemetry.log_provider:
+                await asyncio.to_thread(telemetry.log_provider.force_flush, timeout_millis=5000)
         app = make_http_app(server, os.environ.get("MCP_GATEWAY_AUTH_TOKEN", ""), public_origin,
                             on_shutdown=flush)
         await uvicorn.Server(uvicorn.Config(
@@ -150,6 +164,7 @@ async def serve(config, telemetry, transport="stdio", host="127.0.0.1", port=876
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument("--env-file", type=Path, help="Private JSON mapping of OTEL environment settings")
     parser.add_argument("--transport", choices=["stdio", "streamable-http"], default="stdio")
     parser.add_argument("--host", choices=["127.0.0.1", "::1"], default="127.0.0.1",
                         help="HTTP binds to loopback; use an HTTPS reverse proxy for remote clients")
@@ -159,8 +174,13 @@ def main():
     logging.basicConfig(stream=sys.stderr, level=logging.WARNING, format="%(levelname)s: %(message)s")
     telemetry = None
     try:
+        if args.env_file:
+            import json
+            for key, value in json.loads(args.env_file.read_text()).items():
+                if key.startswith("OTEL_") and isinstance(value, str):
+                    os.environ[key] = value
         config = read_config(args.config)
-        telemetry = Telemetry(config.name, config.agent_name)
+        telemetry = Telemetry(config.name, config.agent_name, export_logs=config.export_logs)
         asyncio.run(serve(config, telemetry, args.transport, args.host, args.port, args.public_origin))
     except KeyboardInterrupt:
         pass

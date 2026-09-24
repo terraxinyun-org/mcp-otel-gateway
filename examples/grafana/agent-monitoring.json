@@ -6,6 +6,13 @@
       "type": "datasource",
       "pluginId": "tempo",
       "pluginName": "Tempo"
+    },
+    {
+      "name": "DS_LOKI",
+      "label": "Grafana Cloud Logs / Loki",
+      "type": "datasource",
+      "pluginId": "loki",
+      "pluginName": "Loki"
     }
   ],
   "title": "TXY Agent Monitoring",
@@ -25,6 +32,120 @@
   "refresh": "30s",
   "panels": [
     {
+      "id": 10,
+      "title": "Command execution and output",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "{service_name=\"mcp-otel-gateway\"} | json | tool=\"run_command\"",
+          "queryType": "range",
+          "editorMode": "code",
+          "maxLines": 1000
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 11,
+      "title": "File reads and writes",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "{service_name=\"mcp-otel-gateway\"} | json | tool=~\"read_file|write_file\"",
+          "queryType": "range",
+          "editorMode": "code",
+          "maxLines": 1000
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 12,
+      "title": "All MCP tool logs",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "{service_name=\"mcp-otel-gateway\"}",
+          "queryType": "range",
+          "editorMode": "code",
+          "maxLines": 1000
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
       "id": 1,
       "title": "MCP tool calls",
       "type": "table",
@@ -36,7 +157,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 27
       },
       "targets": [
         {
@@ -67,7 +188,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 36
       },
       "targets": [
         {
@@ -98,7 +219,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 45
       },
       "targets": [
         {
