@@ -32,19 +32,34 @@
   "refresh": "30s",
   "panels": [
     {
-      "id": 20,
-      "title": "AI analysis summaries",
-      "type": "logs",
-      "description": "Headless Codex assessment of recorded MCP evidence. Findings are advisory; severity describes potential impact, not proof of malicious intent. Expand a finding for its evidence and source trace IDs.",
+      "id": 30,
+      "title": "AI activity analysis",
+      "type": "text",
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "What happened, how it relates to the authorized task, and what evidence is missing. Counts show analyst observations, including simulations\u2014not confirmed attacks. The timeline uses **report publication time**. Expand the findings below for the explanation and supporting evidence."
+      }
+    },
+    {
+      "id": 31,
+      "title": "Observed activity types",
+      "type": "barchart",
+      "description": "Unique finding IDs in the selected time range, grouped by activity. Counts are not risk scores. Only categories with observations are shown.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
       "gridPos": {
-        "h": 7,
-        "w": 24,
+        "h": 9,
+        "w": 12,
         "x": 0,
-        "y": 0
+        "y": 3
       },
       "targets": [
         {
@@ -53,7 +68,391 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "{service_name=\"mcp-otel-analyst\"} | json | event=\"agent.analysis.summary\"",
+          "expr": "count by (activity_type) (sum by (finding_id, activity_type) (count_over_time({service_name=\"mcp-otel-analyst\"} | json event=\"event\", activity_type=\"activity_type\", category=\"category\", finding_id=\"finding_id\", prompt_version=\"prompt_version\" | event=\"agent.analysis.finding\" | prompt_version=\"codex-activity-v2\" | __error__=\"\" | finding_id!=\"\" [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "editorMode": "code",
+          "legendFormat": "{{activity_type}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#73BF69"
+          },
+          "custom": {
+            "axisLabel": "Findings",
+            "fillOpacity": 85,
+            "lineWidth": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Activity"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "credential_access": {
+                        "text": "Credential access"
+                      },
+                      "data_transfer": {
+                        "text": "Data transfer"
+                      },
+                      "audit_tampering": {
+                        "text": "Audit-file changes"
+                      },
+                      "monitoring_changes": {
+                        "text": "Monitoring changes"
+                      },
+                      "encoded_execution": {
+                        "text": "Encoded execution"
+                      },
+                      "workspace_boundary": {
+                        "text": "Workspace boundary"
+                      },
+                      "task_deviation": {
+                        "text": "Task deviation"
+                      },
+                      "prompt_injection": {
+                        "text": "Prompt injection"
+                      },
+                      "execution_failure": {
+                        "text": "Execution failures"
+                      },
+                      "visibility_gap": {
+                        "text": "Visibility gaps"
+                      },
+                      "other": {
+                        "text": "Related activity sequence"
+                      },
+                      "security": {
+                        "text": "Security observations"
+                      },
+                      "operational": {
+                        "text": "Operational observations"
+                      },
+                      "coverage": {
+                        "text": "Coverage gaps"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xField": "Activity",
+        "showValue": "always",
+        "groupWidth": 0.7,
+        "barWidth": 0.7,
+        "barRadius": 0,
+        "fullHighlight": false,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "transformations": [
+        {
+          "id": "seriesToRows",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "Metric": "Activity",
+              "Value": "Findings"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "title": "What the analyst found",
+      "type": "barchart",
+      "description": "Unique finding IDs in the selected time range, grouped by activity. Counts are not risk scores. Only categories with observations are shown.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "count by (category) (sum by (finding_id, category) (count_over_time({service_name=\"mcp-otel-analyst\"} | json event=\"event\", activity_type=\"activity_type\", category=\"category\", finding_id=\"finding_id\", prompt_version=\"prompt_version\" | event=\"agent.analysis.finding\" | prompt_version=\"codex-activity-v2\" | __error__=\"\" | finding_id!=\"\" [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "editorMode": "code",
+          "legendFormat": "{{category}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          },
+          "custom": {
+            "axisLabel": "Findings",
+            "fillOpacity": 85,
+            "lineWidth": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Activity"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "credential_access": {
+                        "text": "Credential access"
+                      },
+                      "data_transfer": {
+                        "text": "Data transfer"
+                      },
+                      "audit_tampering": {
+                        "text": "Audit-file changes"
+                      },
+                      "monitoring_changes": {
+                        "text": "Monitoring changes"
+                      },
+                      "encoded_execution": {
+                        "text": "Encoded execution"
+                      },
+                      "workspace_boundary": {
+                        "text": "Workspace boundary"
+                      },
+                      "task_deviation": {
+                        "text": "Task deviation"
+                      },
+                      "prompt_injection": {
+                        "text": "Prompt injection"
+                      },
+                      "execution_failure": {
+                        "text": "Execution failures"
+                      },
+                      "visibility_gap": {
+                        "text": "Visibility gaps"
+                      },
+                      "other": {
+                        "text": "Related activity sequence"
+                      },
+                      "security": {
+                        "text": "Security observations"
+                      },
+                      "operational": {
+                        "text": "Operational observations"
+                      },
+                      "coverage": {
+                        "text": "Coverage gaps"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xField": "Activity",
+        "showValue": "always",
+        "groupWidth": 0.7,
+        "barWidth": 0.7,
+        "barRadius": 0,
+        "fullHighlight": false,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "transformations": [
+        {
+          "id": "seriesToRows",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "Metric": "Activity",
+              "Value": "Findings"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "title": "AI findings published over time",
+      "type": "timeseries",
+      "description": "Findings published per one-minute window, grouped by category. This is analysis time, not the original command execution time. Empty periods mean no findings were published; they do not prove no activity occurred.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "count by (category) (sum by (finding_id, category) (count_over_time({service_name=\"mcp-otel-analyst\"} | json event=\"event\", activity_type=\"activity_type\", category=\"category\", finding_id=\"finding_id\", prompt_version=\"prompt_version\" | event=\"agent.analysis.finding\" | prompt_version=\"codex-activity-v2\" | __error__=\"\" | finding_id!=\"\" [1m])))",
+          "queryType": "range",
+          "editorMode": "code",
+          "legendFormat": "{{category}}",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 0,
+            "fillOpacity": 80,
+            "spanNulls": false,
+            "axisLabel": "Findings / minute",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "security"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Security observations"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "operational"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Operational observations"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "coverage"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Coverage gaps"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 20,
+      "title": "AI analysis summaries",
+      "type": "logs",
+      "description": "AI narrative review of recorded actions against operator task context. Expand entries for observations, interpretation, evidence and follow-up. No risk scores or automatic actions.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "{service_name=\"mcp-otel-analyst\"} | json | event=\"agent.analysis.summary\" | prompt_version=\"codex-activity-v2\"",
           "queryType": "range",
           "editorMode": "code",
           "maxLines": 1000
@@ -74,7 +473,7 @@
       "id": 21,
       "title": "AI findings \u2014 headless Codex",
       "type": "logs",
-      "description": "Headless Codex assessment of recorded MCP evidence. Findings are advisory; severity describes potential impact, not proof of malicious intent. Expand a finding for its evidence and source trace IDs.",
+      "description": "AI narrative review of recorded actions against operator task context. Expand entries for observations, interpretation, evidence and follow-up. No risk scores or automatic actions.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -83,7 +482,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 7
+        "y": 27
       },
       "targets": [
         {
@@ -92,7 +491,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "{service_name=\"mcp-otel-analyst\"} | json | event=\"agent.analysis.finding\"",
+          "expr": "{service_name=\"mcp-otel-analyst\"} | json | event=\"agent.analysis.finding\" | prompt_version=\"codex-activity-v2\"",
           "queryType": "range",
           "editorMode": "code",
           "maxLines": 1000
@@ -121,7 +520,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 39
       },
       "targets": [
         {
@@ -159,7 +558,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 48
       },
       "targets": [
         {
@@ -197,7 +596,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 37
+        "y": 57
       },
       "targets": [
         {
@@ -235,7 +634,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 66
       },
       "targets": [
         {
@@ -266,7 +665,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 55
+        "y": 75
       },
       "targets": [
         {
@@ -297,7 +696,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 64
+        "y": 84
       },
       "targets": [
         {

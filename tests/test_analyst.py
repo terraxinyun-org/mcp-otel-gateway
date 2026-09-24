@@ -18,8 +18,8 @@ def source(content=None, event="mcp.tool.completed"):
 
 def assessment():
     return {"summary": "A test observation; intent cannot be determined.", "disposition": "review_recommended",
-        "findings": [{"title": "Example observation", "category": "coverage", "severity": "low",
-            "confidence": "high", "observation": "A command was recorded.", "assessment": "No OS evidence.",
+        "findings": [{"title": "Example observation", "category": "coverage", "activity_type": "visibility_gap",
+            "observation": "A command was recorded.", "assessment": "No OS evidence.",
             "evidence_ids": ["e0001"], "recommendation": "Review the task context."}],
         "limitations": ["Gateway evidence only."]}
 
@@ -93,7 +93,7 @@ def test_findings_export_real_otlp_correlates_original_evidence(receiver, monkey
     endpoint, received = receiver
     monkeypatch.setenv('OTEL_EXPORTER_OTLP_ENDPOINT', endpoint)
     evidence = evidence_from_inputs([[source()]])
-    report = {"analysis_id": "batch-test", "engine": "headless_codex", "model": "test-model",
+    report = {"analysis_id": "batch-test", "engine": "headless_codex", "model": "test-model", "prompt_version": "codex-activity-v2",
               "coverage": "gateway only", "evidence_count": 1, "duration_seconds": 1.5,
               "usage": {}, "assessment": assessment(), "evidence": evidence}
     assert export_report(report) == 2
@@ -103,6 +103,10 @@ def test_findings_export_real_otlp_correlates_original_evidence(receiver, monkey
     finding = next(r for r in records if json.loads(r.body.string_value)['event'] == 'agent.analysis.finding')
     assert finding.trace_id.hex() == '1' * 32 and finding.span_id.hex() == '2' * 16
     assert json.loads(finding.body.string_value)['automated_action'] == 'none'
+    body = json.loads(finding.body.string_value)
+    assert body['activity_type'] == 'visibility_gap'
+    assert body['prompt_version'] == 'codex-activity-v2'
+    assert not {'severity', 'confidence', 'score'} & body.keys()
     resources = {a.key: a.value.string_value for a in request.resource_logs[0].resource.attributes}
     assert resources['service.name'] == 'mcp-otel-analyst'
 
@@ -116,7 +120,7 @@ def test_export_failure_is_not_reported_as_success():
         def shutdown(self):
             self.closed = True
     exporter = FailedExporter()
-    report = {"analysis_id": "batch-test", "engine": "headless_codex", "model": "test-model",
+    report = {"analysis_id": "batch-test", "engine": "headless_codex", "model": "test-model", "prompt_version": "codex-activity-v2",
               "coverage": "gateway only", "evidence_count": 1, "duration_seconds": 1,
               "usage": {}, "assessment": assessment(), "evidence": evidence_from_inputs([[source()]])}
     with pytest.raises(ValueError, match="export failed"):

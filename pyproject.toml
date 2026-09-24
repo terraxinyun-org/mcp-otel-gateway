@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "txy-mcp-otel-gateway"
-version = "0.5.0"
+version = "0.5.1"
 description = "MCP tool gateway with bounded optional content capture and standard OpenTelemetry export"
 readme = "README.md"
 license = "MIT"

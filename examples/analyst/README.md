@@ -88,11 +88,19 @@ default `service_name="mcp-otel-gateway"`.
 
 ## Findings and controls
 
-Codex returns a summary, disposition, limitations and up to twelve findings. Each
-finding includes category (security, operational or coverage), severity, qualitative
-confidence, observed evidence, assessment, recommendation and source evidence IDs.
-Every referenced ID is checked against the input. Severity is a model assessment
-of potential impact; it is not a calibrated probability or proof of malicious intent.
+Codex returns a narrative summary, disposition, limitations and up to twelve findings.
+Each finding includes category (security, operational or coverage), activity type,
+observed evidence, interpretation, recommendation and source evidence IDs. There
+are no severity levels, confidence ratings or risk scores. Every referenced ID is
+checked against the input; the interpretation still requires human review.
+
+The versioned [activity analyst prompt](../../src/mcp_otel_gateway/prompts/activity_analyst.txt)
+is the analyst's developer instruction, loaded with every headless invocation.
+It asks the model to review action sequences against operator task context, look
+for sensitive-data access, unexpected transfers, audit/monitoring changes, boundary
+crossing, encoded execution and task deviation, and distinguish facts from inference.
+Prompt version `codex-activity-v2` is saved with the report and exported findings.
+The JSON schema organizes explanations and evidence; it is not a scoring rubric.
 
 The process uses `codex exec --output-schema` with a temporary workspace,
 `--ephemeral`, read-only sandbox mode, ignored user/project rules and user config,
@@ -123,7 +131,13 @@ No blocking, remediation, process termination or alert notification is performed
 In Grafana Explore (Loki):
 
 ```logql
-{service_name="mcp-otel-analyst"} | json | event="agent.analysis.finding"
+{service_name="mcp-otel-analyst"} | json | event="agent.analysis.finding" | prompt_version="codex-activity-v2"
 ```
+
+The dashboard shows finding counts by activity type and category, plus a timeline
+at report publication time. Counts are distinct finding IDs, not attacks, commands,
+or scores. One finding can discuss a related sequence. Only observed categories
+appear; no data does not establish safety. Earlier v1 rated reports remain in the
+backend but are excluded from the current AI panels.
 
 Reference: [Codex noninteractive CLI options](https://learn.chatgpt.com/docs/developer-commands).

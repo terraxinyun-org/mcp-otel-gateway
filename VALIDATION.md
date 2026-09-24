@@ -1,5 +1,22 @@
 # Validation — 2026-09-24
 
+## Version 0.5.1 — narrative activity analysis and graphs
+
+- Replaced severity/confidence fields with an activity type and a versioned,
+  file-based analyst instruction. The model explains observations, task context,
+  interpretation, evidence and follow-up without risk scoring.
+- Re-reviewed the 36 simulation events with the real headless Codex process:
+  six narrative findings in 55.58 seconds, zero analyst tool calls. The model
+  grouped some related activities; finding counts are not command/attack counts.
+- Retrieved all new AI panel and graph data through Grafana's query API: six
+  findings (three security observations, two coverage gaps, one operational
+  observation), activity groups and a publication-time graph.
+- Inspected the Grafana-rendered dashboard image and corrected the bar-chart
+  transformation so every category and count is visible. Twenty-seven tests,
+  dependency checks and wheel build passed; the wheel includes the analyst prompt.
+- The dashboard filters AI panels to the new prompt version, preserving older
+  backend records. Analysis is still on demand, not continuous monitoring.
+
 ## Version 0.5.0 — headless Codex analysis
 
 - Twenty-seven tests passed on Python 3.12; dependency checks and wheel build passed.

@@ -13,6 +13,8 @@
    plus trace tables for tool calls, failures and imported runtime evidence.
    AI summary and finding panels populate when the optional
    [headless Codex analyst](../analyst/README.md) exports a completed review.
+   Activity/category charts and a publication timeline show current prompt-version
+   findings without risk scoring. Expand narrative findings for the evidence.
    It starts empty until you connect exporters.
 4. Launch the gateway with the OTLP settings and exercise a tool. Open a trace
    from the results to inspect attributes and captured span events. Set
