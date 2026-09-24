@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "txy-mcp-otel-gateway"
-version = "0.2.0"
-description = "Metadata-only MCP tool gateway with standard OpenTelemetry export"
+version = "0.3.0"
+description = "MCP tool gateway with bounded optional content capture and standard OpenTelemetry export"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -26,6 +26,7 @@ test = ["pytest>=8,<10", "pytest-asyncio>=1,<2"]
 
 [project.scripts]
 mcp-otel-gateway = "mcp_otel_gateway.server:main"
+mcp-otel-evidence = "mcp_otel_gateway.evidence:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mcp_otel_gateway"]

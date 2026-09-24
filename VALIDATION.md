@@ -1,5 +1,26 @@
 # Validation — 2026-09-24
 
+## Version 0.3.0 — optional content and saved runtime evidence
+
+- Nineteen tests passed on Python 3.12, retaining the previous compatibility tests.
+- Real MCP subprocess calls with capture enabled exported argument/result events
+  over OTLP/HTTP protobuf. Text, structured content and tool-error results reached
+  the caller unchanged. Email, bearer credential and an exact known environment
+  secret were absent from the captured wire payload.
+- Tests cover capture limits, sensitive nested keys, JSON-encoded credentials,
+  and opaque payload omission. These are representative cases, not proof of
+  comprehensive PII/secret filtering.
+- Saved lab manifests exported through the official OTLP exporter with trace IDs,
+  span IDs, parentage, timestamps, status and numeric token usage preserved.
+  Commands and nested credential fields were filtered in the exported bytes.
+- Saved prompt/final response and timed harness item capture was checked for
+  explicit opt-in, event limits, original timestamps and redaction.
+- Grafana dashboard JSON was generated locally. No authenticated Grafana import,
+  live cloud ingestion, Fly deployment, or live harness reconfiguration was done.
+- The evidence adapter is an explicit post-run import. Agent Observability's
+  generation API, evaluation, guards and automatic runtime collection are not
+  connected by this release.
+
 ## Version 0.2.0 — harness interoperability
 
 - Fifteen tests passed on Python 3.12, including the original eight tests.

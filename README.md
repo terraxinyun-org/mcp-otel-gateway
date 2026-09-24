@@ -108,6 +108,10 @@ backend's OTLP trace endpoint and supply its required authorization headers.
 
 ## Local Jaeger demo
 
+For Grafana Cloud, see the [setup guide and importable dashboard](examples/grafana/README.md).
+Version 0.3 adds optional bounded content capture and an explicit saved-lab-evidence
+exporter; no production monitoring settings are changed by installing it.
+
 On a host with Docker Compose:
 
 ```bash
@@ -138,7 +142,7 @@ upstream failures are ERROR. Errors contain a category, not an exception message
 | `gen_ai.agent.name` | Operator configuration; not verified agent identity |
 | `agent_monitor.upstream.name` | Operator's upstream label |
 | `agent_monitor.evidence.source=gateway_observed` | Gateway |
-| `agent_monitor.content_capture=false` | Gateway |
+| `agent_monitor.content_capture` | Operator configuration, false by default |
 | `agent_monitor.parent_context_supplied` | Whether the caller supplied traceparent |
 | `error.type` | Error category, when applicable |
 
@@ -146,11 +150,17 @@ Resource attributes include `service.name`, `service.version`, a random
 `service.instance.id` for this gateway process and
 `agent_monitor.coverage=gateway_tool_calls_only`.
 
-Arguments, outputs, tool descriptions, URLs, headers, credentials and exception
+By default arguments, outputs, tool descriptions, URLs, headers, credentials and exception
 stacks are NOT copied into spans. Tool names and operator-supplied resource labels
 are still metadata: do not put secrets into them. This is content omission, not
 a universal PII redaction engine. The upstream still receives full arguments and
 the requesting client receives full tool results.
+
+To inspect tool content, explicitly set `capture_content: true` in the upstream
+JSON. Bounded argument/result events then undergo best-effort redaction before
+export. This can still disclose sensitive business data and undetected secrets;
+see the [capture limits](examples/grafana/README.md). No raw-capture mode is provided.
+Capture does not modify the data delivered to the tool or the caller.
 
 Optional W3C `traceparent` / `tracestate` in a tools/call request's `_meta` join
 the caller's trace. Without valid context each call starts a new trace. The gateway

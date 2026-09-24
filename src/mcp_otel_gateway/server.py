@@ -21,6 +21,7 @@ from . import __version__
 from .config import GatewayConfig, child_environment, read_config
 from .telemetry import Telemetry
 from .http import make_http_app
+from .capture import Capture
 
 PROPAGATOR = TraceContextTextMapPropagator()
 LOG = logging.getLogger("mcp_otel_gateway")
@@ -48,6 +49,7 @@ def error_result(message: str) -> types.CallToolResult:
 
 def make_server(config: GatewayConfig, telemetry: Telemetry, connect=None) -> Server:
     connect = connect or (lambda: upstream_client(config))
+    capture = Capture(config.capture_max_chars) if config.capture_content else None
 
     @asynccontextmanager
     async def lifespan(server):
@@ -72,7 +74,7 @@ def make_server(config: GatewayConfig, telemetry: Telemetry, connect=None) -> Se
             "gen_ai.agent.name": config.agent_name,
             "agent_monitor.upstream.name": config.name,
             "agent_monitor.evidence.source": "gateway_observed",
-            "agent_monitor.content_capture": False,
+            "agent_monitor.content_capture": config.capture_content,
             "agent_monitor.parent_context_supplied": bool(carrier.get("traceparent")),
         }
         # Fixed span name avoids embedding caller-controlled content in span names.
@@ -86,6 +88,8 @@ def make_server(config: GatewayConfig, telemetry: Telemetry, connect=None) -> Se
                 return error_result("Task-based and multi-round-trip tools are not supported by this gateway.")
             forwarded = {}
             PROPAGATOR.inject(forwarded)
+            if capture:
+                capture.event(span, "mcp.tool.arguments", params.arguments)
             try:
                 async with asyncio.timeout(config.timeout_seconds):
                     result = await ctx.lifespan_context.call_tool(
@@ -97,6 +101,14 @@ def make_server(config: GatewayConfig, telemetry: Telemetry, connect=None) -> Se
                     span.set_attribute("error.type", "tool_error")
                 else:
                     span.set_status(Status(StatusCode.OK))
+                if capture:
+                    # Omit opaque/binary content and protocol metadata.
+                    payload = {"content": [
+                        {"type": "text", "text": block.text} if block.type == "text"
+                        else {"type": block.type, "omitted": True}
+                        for block in result.content
+                    ], "structured_content": result.structured_content}
+                    capture.event(span, "mcp.tool.result", payload)
                 # Preserve text, binary content, structured output and metadata.
                 return result
             except asyncio.CancelledError:

@@ -22,6 +22,8 @@ class GatewayConfig(BaseModel):
     headers_from_env: dict[str, str] = Field(default_factory=dict)
     pass_env: list[str] = Field(default_factory=list)
     timeout_seconds: float = Field(default=60, gt=0, le=3600)
+    capture_content: bool = False
+    capture_max_chars: int = Field(default=8192, ge=256, le=32768)
 
     @model_validator(mode="after")
     def check_transport(self):

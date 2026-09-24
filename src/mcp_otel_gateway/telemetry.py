@@ -16,6 +16,18 @@ from .config import validate_url
 LOG = logging.getLogger("mcp_otel_gateway")
 
 
+def make_exporter():
+    protocol = os.getenv("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL",
+                         os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf"))
+    if protocol != "http/protobuf":
+        raise ValueError("This gateway exports http/protobuf; use an OTel Collector for translation")
+    endpoint = os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") or os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if not endpoint:
+        raise ValueError("Set OTEL_EXPORTER_OTLP_ENDPOINT or OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
+    validate_url(endpoint)
+    return OTLPSpanExporter()
+
+
 class CheckedExporter(SpanExporter):
     def __init__(self, delegate: SpanExporter):
         self.delegate = delegate
@@ -36,16 +48,7 @@ class CheckedExporter(SpanExporter):
 class Telemetry:
     def __init__(self, upstream_name: str, agent_name: str, exporter: SpanExporter | None = None):
         if exporter is None:
-            protocol = os.getenv("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL",
-                                 os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf"))
-            if protocol != "http/protobuf":
-                raise ValueError("This gateway exports http/protobuf; use an OTel Collector for translation")
-            endpoint = os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") or os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
-            if not endpoint:
-                raise ValueError("Set OTEL_EXPORTER_OTLP_ENDPOINT or OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
-            validate_url(endpoint)
-            # SDK uses standard endpoint, headers, certificate and timeout env vars.
-            exporter = OTLPSpanExporter()
+            exporter = make_exporter()
         resource = Resource.create({
             "service.name": os.getenv("OTEL_SERVICE_NAME", "mcp-otel-gateway"),
             "service.version": __version__,
