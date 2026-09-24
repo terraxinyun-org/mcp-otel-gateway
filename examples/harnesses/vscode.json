@@ -1,0 +1,15 @@
+{
+  "servers": {
+    "monitored-tools": {
+      "type": "stdio",
+      "command": "/absolute/path/to/venv/bin/mcp-otel-gateway",
+      "args": [
+        "--config",
+        "/absolute/path/to/upstream.json"
+      ],
+      "env": {
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://127.0.0.1:4318"
+      }
+    }
+  }
+}

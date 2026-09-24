@@ -1,3 +1,3 @@
 """MCP tool-call monitoring independent of any telemetry vendor."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

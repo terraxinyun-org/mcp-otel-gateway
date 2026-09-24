@@ -18,7 +18,9 @@ class EchoResponse(BaseModel):
 
 @server.tool()
 def echo(value: str) -> EchoResponse:
-    return EchoResponse(value=value, collector_secret_visible="OTEL_EXPORTER_OTLP_HEADERS" in os.environ)
+    return EchoResponse(value=value, collector_secret_visible=any(
+        key in os.environ for key in ("OTEL_EXPORTER_OTLP_HEADERS", "MCP_GATEWAY_AUTH_TOKEN")
+    ))
 
 
 @server.tool()

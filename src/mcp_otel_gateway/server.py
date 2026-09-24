@@ -1,4 +1,4 @@
-"""Single-upstream MCP tool gateway. Downstream transport is local stdio."""
+"""Single-upstream MCP tool gateway with stdio or authenticated Streamable HTTP."""
 
 import argparse
 import asyncio
@@ -20,6 +20,7 @@ from opentelemetry.trace import SpanKind, Status, StatusCode
 from . import __version__
 from .config import GatewayConfig, child_environment, read_config
 from .telemetry import Telemetry
+from .http import make_http_app
 
 PROPAGATOR = TraceContextTextMapPropagator()
 LOG = logging.getLogger("mcp_otel_gateway")
@@ -116,22 +117,39 @@ def make_server(config: GatewayConfig, telemetry: Telemetry, connect=None) -> Se
                   on_list_tools=list_tools, on_call_tool=call_tool)
 
 
-async def serve(config, telemetry):
+async def serve(config, telemetry, transport="stdio", host="127.0.0.1", port=8765, public_origin=None):
     server = make_server(config, telemetry)
-    async with stdio_server() as (read, write):
-        await server.run(read, write, server.create_initialization_options())
+    if transport == "stdio":
+        async with stdio_server() as (read, write):
+            await server.run(read, write, server.create_initialization_options())
+    else:
+        import uvicorn
+        # Flush before Uvicorn re-raises SIGTERM after lifespan shutdown.
+        async def flush():
+            await asyncio.to_thread(telemetry.provider.force_flush, timeout_millis=5000)
+        app = make_http_app(server, os.environ.get("MCP_GATEWAY_AUTH_TOKEN", ""), public_origin,
+                            on_shutdown=flush)
+        await uvicorn.Server(uvicorn.Config(
+            app, host=host, port=port, log_level="warning", access_log=False,
+            proxy_headers=False,
+        )).serve()
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument("--transport", choices=["stdio", "streamable-http"], default="stdio")
+    parser.add_argument("--host", choices=["127.0.0.1", "::1"], default="127.0.0.1",
+                        help="HTTP binds to loopback; use an HTTPS reverse proxy for remote clients")
+    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--public-origin", help="HTTPS origin accepted behind a reverse proxy")
     args = parser.parse_args()
     logging.basicConfig(stream=sys.stderr, level=logging.WARNING, format="%(levelname)s: %(message)s")
     telemetry = None
     try:
         config = read_config(args.config)
         telemetry = Telemetry(config.name, config.agent_name)
-        asyncio.run(serve(config, telemetry))
+        asyncio.run(serve(config, telemetry, args.transport, args.host, args.port, args.public_origin))
     except KeyboardInterrupt:
         pass
     except Exception:

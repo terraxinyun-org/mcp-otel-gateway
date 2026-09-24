@@ -1,11 +1,11 @@
 # MCP OpenTelemetry Gateway
 
-A standalone, local MCP tool gateway. Replace an existing MCP tool-server entry
+A standalone MCP tool gateway. Replace an existing MCP tool-server entry
 with this gateway to automatically emit an OpenTelemetry span for every tool call
 that passes through it. The gateway forwards requests to the original server.
 
 ```text
-Agent client --MCP/stdio--> Gateway --MCP--> Existing tool server
+Agent client --MCP/stdio or HTTP--> Gateway --MCP--> Existing tool server
                               |
                               +--OTLP/HTTP protobuf--> Collector / trace backend
 ```
@@ -70,8 +70,15 @@ The gateway preserves upstream tool names, schemas, descriptions, annotations
 and tool results. Use one gateway entry per upstream. Restart the MCP connection
 when changing upstream configuration.
 
-The client starts the gateway over stdio. There is no new public listening port,
-server URL or multi-tenant authentication layer in this release.
+By default the client starts the gateway over stdio, without a listening port.
+For harnesses that use a URL, version 0.2 adds authenticated Streamable HTTP on
+loopback, with HTTPS reverse-proxy support. HTTP mode is single-trust-domain,
+not a multi-tenant authorization service.
+
+See [Harness compatibility](COMPATIBILITY.md) for Claude Code, Codex, Gemini CLI,
+Cursor, VS Code and OpenCode configuration templates, HTTP setup, protocol test
+coverage and feature limits. Templates are documented integrations, not a claim
+that every application/version has been tested in a live model session.
 
 ## Choose a telemetry destination
 

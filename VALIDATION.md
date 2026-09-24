@@ -1,5 +1,22 @@
 # Validation — 2026-09-24
 
+## Version 0.2.0 — harness interoperability
+
+- Fifteen tests passed on Python 3.12, including the original eight tests.
+- Independent raw JSON-RPC clients negotiated protocol versions `2024-11-05`,
+  `2025-03-26`, `2025-06-18`, and `2025-11-25`, listed tools, called a tool and
+  produced OTLP telemetry through the gateway.
+- Modern and legacy SDK clients connected through the authenticated downstream
+  Streamable HTTP transport and successfully called the stdio upstream.
+- Missing/incorrect authorization and an untrusted browser Origin were rejected.
+- Graceful HTTP termination flushed the last buffered span to the test receiver.
+- Six client templates were syntax-checked. Their formats were checked against
+  official docs; this does not constitute six live harness/model tests.
+- Wheel build and installed dependency checks passed. No live agent settings or
+  production endpoints were modified.
+
+## Version 0.1.0 — initial export validation
+
 Version: 0.1.0. Python 3.12, MCP SDK 2.2.0, OpenTelemetry SDK/exporter 1.44.0.
 
 - Eight tests passed. Real subprocess tests exercised MCP stdio and Streamable
