@@ -32,6 +32,84 @@
   "refresh": "30s",
   "panels": [
     {
+      "id": 20,
+      "title": "AI analysis summaries",
+      "type": "logs",
+      "description": "Headless Codex assessment of recorded MCP evidence. Findings are advisory; severity describes potential impact, not proof of malicious intent. Expand a finding for its evidence and source trace IDs.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "{service_name=\"mcp-otel-analyst\"} | json | event=\"agent.analysis.summary\"",
+          "queryType": "range",
+          "editorMode": "code",
+          "maxLines": 1000
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 21,
+      "title": "AI findings \u2014 headless Codex",
+      "type": "logs",
+      "description": "Headless Codex assessment of recorded MCP evidence. Findings are advisory; severity describes potential impact, not proof of malicious intent. Expand a finding for its evidence and source trace IDs.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "{service_name=\"mcp-otel-analyst\"} | json | event=\"agent.analysis.finding\"",
+          "queryType": "range",
+          "editorMode": "code",
+          "maxLines": 1000
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
       "id": 10,
       "title": "Command execution and output",
       "type": "logs",
@@ -43,7 +121,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 19
       },
       "targets": [
         {
@@ -81,7 +159,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 28
       },
       "targets": [
         {
@@ -119,7 +197,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 37
       },
       "targets": [
         {
@@ -157,7 +235,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 46
       },
       "targets": [
         {
@@ -188,7 +266,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 55
       },
       "targets": [
         {
@@ -219,7 +297,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 64
       },
       "targets": [
         {

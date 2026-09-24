@@ -20,6 +20,11 @@ Use runtime mode when you want commands and file operations to happen through MC
 without installing a separate host collector. A tested Codex launch profile makes
 this its execution route; other harnesses require their own tool restrictions.
 
+Version 0.5 adds an optional [headless Codex analyst](examples/analyst/README.md).
+It reviews bounded batches of recorded activity, validates evidence references,
+and exports AI findings as OTLP logs. It runs separately from tool execution and
+does not take automated actions. It requires a signed-in Codex CLI.
+
 ## Install
 
 Python 3.11+:
@@ -191,8 +196,9 @@ The SDK's evolving GenAI names are isolated to this package's instrumentation.
   continuation workflows and progress forwarding are not supported. This is not
   a transparent replacement for servers requiring those capabilities.
 - Tools/list is forwarded on request; list-change notifications are not relayed.
-- Logs are opt-in with `export_logs: true`. Metrics are not exported. This release
-  does not perform threat detection, AI review, OS containment or microVM provisioning.
+- Logs are opt-in with `export_logs: true`. Metrics are not exported. The gateway
+  does not classify threats or perform OS containment/microVM provisioning. The
+  optional headless analyst provides post-execution AI review of captured evidence.
 - No cloud service or live MCP client configuration
   is changed by installing this package.
 

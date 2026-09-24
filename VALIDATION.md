@@ -1,5 +1,26 @@
 # Validation — 2026-09-24
 
+## Version 0.5.0 — headless Codex analysis
+
+- Twenty-seven tests passed on Python 3.12; dependency checks and wheel build passed.
+- Added an optional batch analyst using the signed-in Codex CLI, independent of
+  MCP execution. No new Python runtime dependencies, sensor or polling daemon.
+- A live Codex CLI 0.156.1 / configured GPT-6 Astra review analyzed 36 recorded
+  events from two authorized dummy-data simulations in 60.34 seconds. It returned
+  nine evidence-linked findings and made zero tool calls. This is a single-run
+  measurement, not a latency or cost guarantee.
+- A second live review of ten benign smoke-test events returned `no_clear_concern`,
+  treating the deliberate exit code 7 as expected behavior. It completed in 16.88
+  seconds with zero tool calls. These examples do not establish detection accuracy.
+- Local tests cover input redaction/deduplication/bounds, rejecting invented
+  evidence IDs and analyst tool events, restricted subprocess configuration and
+  credential-environment exclusion, real OTLP protobuf export with source trace
+  correlation, export failures, query overflow, and credential redirect refusal.
+- The nine simulation findings and summary were independently retrieved from live
+  Grafana Loki. Both new dashboard panels returned their expected rows via the API.
+- Analysis is advisory and runs on demand; no automated blocking/remediation,
+  continuous worker, Fly deployment, or global Codex configuration change.
+
 ## Version 0.4.0 — MCP execution and logs
 
 - Twenty-one tests passed on Python 3.12; dependency checks and wheel build passed.

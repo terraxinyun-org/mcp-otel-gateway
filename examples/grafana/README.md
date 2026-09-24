@@ -5,12 +5,14 @@
 1. Open your Grafana Cloud stack. In the OpenTelemetry setup guide choose direct
    SDK ingestion. Copy the generated OTLP/HTTP endpoint and authentication settings
    to a private environment file on the machine running the exporter.
-2. Use a Cloud Access Policy token with `traces:write`. A Grafana service-account
+2. Use a Cloud Access Policy token with `traces:write` and `logs:write` when exporting logs. A Grafana service-account
    token for managing dashboards is a different credential. Never commit either.
 3. In Dashboards > New > Import, upload `agent-monitoring.json`, select the existing
    Grafana Cloud Traces / Tempo and Logs / Loki data sources, and import. The
    dashboard has log panels for commands, file operations and all MCP calls,
    plus trace tables for tool calls, failures and imported runtime evidence.
+   AI summary and finding panels populate when the optional
+   [headless Codex analyst](../analyst/README.md) exports a completed review.
    It starts empty until you connect exporters.
 4. Launch the gateway with the OTLP settings and exercise a tool. Open a trace
    from the results to inspect attributes and captured span events. Set
