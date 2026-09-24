@@ -1,0 +1,22 @@
+# Local example: run an OpenTelemetry Collector with this configuration.
+# For production, replace debug with your vendor's exporter and configure
+# TLS, authentication and persistent queues. Bind only to a trusted interface.
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 127.0.0.1:4318
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 128
+  batch: {}
+exporters:
+  debug:
+    verbosity: detailed
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]

@@ -1,0 +1,9 @@
+{
+  "name": "my-tools",
+  "agent_name": "coding-agent",
+  "transport": "stdio",
+  "command": "/absolute/path/to/existing-mcp-server",
+  "args": [],
+  "pass_env": [],
+  "timeout_seconds": 60
+}

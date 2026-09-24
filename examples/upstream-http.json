@@ -1,0 +1,10 @@
+{
+  "name": "remote-tools",
+  "agent_name": "coding-agent",
+  "transport": "streamable_http",
+  "url": "https://tools.example.com/mcp",
+  "headers_from_env": {
+    "Authorization": "UPSTREAM_AUTHORIZATION"
+  },
+  "timeout_seconds": 60
+}
