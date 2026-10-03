@@ -1,5 +1,7 @@
 # MCP OpenTelemetry Gateway
 
+**New here?** Follow the [Grafana Cloud quickstart](examples/grafana/README.md#grafana-cloud-quickstart) to clone this repo, run a harmless MCP command/file demo, and see its logs and traces in your own Grafana stack. No Fly app, Alloy collector, model login, or real agent is needed for that first test.
+
 A standalone MCP tool gateway. Replace an existing MCP tool-server entry
 with this gateway to automatically emit an OpenTelemetry span for every tool call
 that passes through it. The gateway forwards requests to the original server.
